@@ -1,0 +1,67 @@
+version: "3.3"
+
+services:
+  nginx:
+    build:
+      context: ./requirements/nginx
+    image: nginx
+    container_name: nginx
+    volumes:
+      - wordpress:/var/www/html/wordpress
+    ports:
+      - 443:443
+    depends_on:
+      - wordpress
+    networks:
+      - mynetw
+    restart: always
+  mariadb:
+    build:
+      context: ./requirements/mariadb/
+      args:
+        MYSQL_DB_DATABASE: ${MYSQL_DB_DATABASE}
+        MYSQL_DB_USER: ${MYSQL_DB_USER}
+        MYSQL_DB_USER_PASSWORD: ${MYSQL_DB_USER_PASSWORD}
+        MYSQL_DB_ROOT_PASSWORD: ${MYSQL_DB_ROOT_PASSWORD}
+    image: mariadb
+    container_name: mariadb
+    env_file:
+      - .env
+    volumes:
+      - mariadb:/var/lib/mysql
+    networks:
+      - mynetw
+    restart: always
+  wordpress:
+    build:
+      context: ./requirements/wordpress
+    image: wordpress
+    container_name: wordpress
+    env_file:
+      - .env
+    depends_on:
+      - mariadb
+    volumes:
+      - wordpress:/var/www/html/wordpress
+    networks:
+      - mynetw
+    restart: always
+networks:
+  mynetw:
+    driver: bridge
+    name: mynetw
+volumes:
+  mariadb:
+    driver: local
+    name: mariadb
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/achahdan/data/mariadb
+  wordpress:
+    driver: local
+    name: wordpress
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/achahdan/data/wordpress
